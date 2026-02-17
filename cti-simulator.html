@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTI Protocol Simulator By Shanmukh Koya</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 400px;
+            gap: 0;
+            height: calc(100vh - 200px);
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            color: #2a5298;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .protocol-selector {
+            margin-bottom: 30px;
+        }
+
+        .protocol-btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .protocol-btn:hover {
+            border-color: #2a5298;
+            background: #f0f4ff;
+        }
+
+        .protocol-btn.active {
+            background: #2a5298;
+            color: white;
+            border-color: #2a5298;
+        }
+
+        .scenario-section {
+            margin-bottom: 30px;
+        }
+
+        .scenario-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .scenario-btn:hover {
+            background: #e9ecef;
+        }
+
+        .canvas-area {
+            background: white;
+            padding: 30px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .call-flow-diagram {
+            min-height: 600px;
+            position: relative;
+        }
+
+        .participant {
+            background: #f8f9fa;
+            border: 2px solid #2a5298;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            position: absolute;
+            width: 150px;
+        }
+
+        .participant.caller {
+            left: 50px;
+            top: 20px;
+            background: #e3f2fd;
+        }
+
+        .participant.server {
+            left: 50%;
+            transform: translateX(-50%);
+            top: 20px;
+            background: #fff3e0;
+        }
+
+        .participant.callee {
+            right: 50px;
+            top: 20px;
+            background: #f3e5f5;
+        }
+
+        .lifeline {
+            position: absolute;
+            width: 2px;
+            background: #dee2e6;
+            top: 70px;
+            height: calc(100% - 70px);
+        }
+
+        .message-arrow {
+            position: absolute;
+            height: 2px;
+            background: #2a5298;
+            transition: all 0.5s;
+        }
+
+        .message-arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid #2a5298;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+
+        .message-label {
+            position: absolute;
+            background: white;
+            padding: 4px 8px;
+            border: 1px solid #2a5298;
+            border-radius: 4px;
+            font-size: 0.85em;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .message-label:hover {
+            background: #2a5298;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .event-panel {
+            background: #f8f9fa;
+            border-left: 1px solid #dee2e6;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .event-panel h3 {
+            color: #2a5298;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .event-log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .event-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-left: 3px solid #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .timestamp {
+            color: #9cdcfe;
+            font-weight: bold;
+        }
+
+        .protocol-detail {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .protocol-detail h4 {
+            color: #2a5298;
+            margin-bottom: 10px;
+        }
+
+        .protocol-code {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            white-space: pre-wrap;
+            border-left: 4px solid #2a5298;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        .btn-secondary {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #e68900;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+
+        .info-box h4 {
+            color: #1976D2;
+            margin-bottom: 8px;
+        }
+
+        .protocol-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .protocol-info h2 {
+            color: #2a5298;
+            margin-bottom: 15px;
+        }
+
+        .protocol-info ul {
+            margin-left: 20px;
+        }
+
+        .protocol-info li {
+            margin-bottom: 8px;
+        }
+
+        .voice-controls {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .voice-controls h4 {
+            color: #2a5298;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .voice-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #4CAF50;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            top: 3px;
+            left: 3px;
+            transition: left 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 29px;
+        }
+
+        .voice-settings {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .voice-setting-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .voice-setting-row label {
+            min-width: 80px;
+            font-size: 0.9em;
+        }
+
+        .voice-setting-row input[type="range"] {
+            flex: 1;
+        }
+
+        .voice-setting-row select {
+            flex: 1;
+            padding: 5px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+
+        .speaking-indicator {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .speaking-indicator.active {
+            display: flex;
+        }
+
+        .wave {
+            display: flex;
+            gap: 3px;
+        }
+
+        .wave span {
+            width: 3px;
+            height: 15px;
+            background: #2196F3;
+            border-radius: 2px;
+            animation: wave 1s ease-in-out infinite;
+        }
+
+        .wave span:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .wave span:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .wave span:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes wave {
+            0%, 100% {
+                transform: scaleY(1);
+            }
+            50% {
+                transform: scaleY(2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔌 CTI Protocol Simulator</h1>
+            <p>Interactive Computer Telephony Integration Protocol Demonstration by Shanmukh Koya</p>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="protocol-selector">
+                    <h3>📋 Protocol Selection</h3>
+                    <button class="protocol-btn active" data-protocol="sip">SIP</button>
+                    <button class="protocol-btn" data-protocol="tapi">TAPI</button>
+                    <button class="protocol-btn" data-protocol="csta">CSTA</button>
+                </div>
+
+                <div class="scenario-section">
+                    <h3>📞 Call Scenarios</h3>
+                    <button class="scenario-btn" data-scenario="basic-call">Basic Call Setup</button>
+                    <button class="scenario-btn" data-scenario="inbound">Inbound Call</button>
+                    <button class="scenario-btn" data-scenario="outbound">Outbound Call</button>
+                    <button class="scenario-btn" data-scenario="transfer">Call Transfer</button>
+                    <button class="scenario-btn" data-scenario="hold">Call Hold/Resume</button>
+                    <button class="scenario-btn" data-scenario="conference">Conference Call</button>
+                    <button class="scenario-btn" data-scenario="hangup">Call Termination</button>
+                </div>
+            </div>
+
+            <div class="canvas-area">
+                <div id="protocol-info"></div>
+                <div id="call-flow-diagram" class="call-flow-diagram"></div>
+            </div>
+
+            <div class="event-panel">
+                <h3>📊 Event Log</h3>
+                <div id="event-log" class="event-log"></div>
+                
+                <div class="controls">
+                    <button class="btn btn-primary" id="start-simulation">▶ Start</button>
+                    <button class="btn btn-secondary" id="pause-simulation">⏸ Pause</button>
+                    <button class="btn btn-danger" id="clear-log">🗑 Clear</button>
+                </div>
+
+                <div id="protocol-detail" class="protocol-detail" style="display: none;">
+                    <h4>Protocol Message Details</h4>
+                    <div id="protocol-code" class="protocol-code"></div>
+                </div>
+
+                <div class="info-box">
+                    <h4>ℹ️ Quick Tips</h4>
+                    <p style="font-size: 0.9em;">Click on message arrows in the diagram to view detailed protocol messages.</p>
+                </div>
+
+                <div class="voice-controls">
+                    <h4>🔊 Voice Narration</h4>
+                    <div class="voice-toggle">
+                        <div class="toggle-switch" id="voice-toggle"></div>
+                        <span id="voice-status">Enable Voice</span>
+                    </div>
+                    <div class="voice-settings">
+                        <div class="voice-setting-row">
+                            <label>Voice:</label>
+                            <select id="voice-select"></select>
+                        </div>
+                        <div class="voice-setting-row">
+                            <label>Speed:</label>
+                            <input type="range" id="voice-rate" min="0.5" max="2" step="0.1" value="1">
+                            <span id="rate-value">1x</span>
+                        </div>
+                        <div class="voice-setting-row">
+                            <label>Pitch:</label>
+                            <input type="range" id="voice-pitch" min="0.5" max="2" step="0.1" value="1">
+                            <span id="pitch-value">1x</span>
+                        </div>
+                    </div>
+                    <div class="speaking-indicator" id="speaking-indicator">
+                        <div class="wave">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span>Speaking...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CTISimulator {
+            constructor() {
+                this.currentProtocol = 'sip';
+                this.currentScenario = null;
+                this.isRunning = false;
+                this.isPaused = false;
+                this.eventLog = [];
+                this.simulationSpeed = 1000;
+                
+                // Voice narration properties
+                this.voiceEnabled = false;
+                this.synthesis = window.speechSynthesis;
+                this.voices = [];
+                this.currentVoice = null;
+                this.voiceRate = 1;
+                this.voicePitch = 1;
+                
+                this.initEventListeners();
+                this.initVoiceNarration();
+                this.showProtocolInfo('sip');
+            }
+
+            initVoiceNarration() {
+                // Load available voices
+                const loadVoices = () => {
+                    this.voices = this.synthesis.getVoices();
+                    const voiceSelect = document.getElementById('voice-select');
+                    voiceSelect.innerHTML = '';
+                    
+                    // Prefer English voices
+                    const englishVoices = this.voices.filter(v => v.lang.startsWith('en'));
+                    const voicesToShow = englishVoices.length > 0 ? englishVoices : this.voices;
+                    
+                    voicesToShow.forEach((voice, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = `${voice.name} (${voice.lang})`;
+                        voiceSelect.appendChild(option);
+                    });
+                    
+                    if (voicesToShow.length > 0) {
+                        this.currentVoice = voicesToShow[0];
+                    }
+                };
+
+                // Voice might load asynchronously
+                loadVoices();
+                if (this.synthesis.onvoiceschanged !== undefined) {
+                    this.synthesis.onvoiceschanged = loadVoices;
+                }
+
+                // Voice toggle
+                document.getElementById('voice-toggle').addEventListener('click', (e) => {
+                    this.voiceEnabled = !this.voiceEnabled;
+                    e.target.classList.toggle('active');
+                    document.getElementById('voice-status').textContent = 
+                        this.voiceEnabled ? 'Voice Enabled' : 'Enable Voice';
+                });
+
+                // Voice selection
+                document.getElementById('voice-select').addEventListener('change', (e) => {
+                    const voices = this.synthesis.getVoices();
+                    this.currentVoice = voices[e.target.value];
+                });
+
+                // Rate control
+                document.getElementById('voice-rate').addEventListener('input', (e) => {
+                    this.voiceRate = parseFloat(e.target.value);
+                    document.getElementById('rate-value').textContent = this.voiceRate.toFixed(1) + 'x';
+                });
+
+                // Pitch control
+                document.getElementById('voice-pitch').addEventListener('input', (e) => {
+                    this.voicePitch = parseFloat(e.target.value);
+                    document.getElementById('pitch-value').textContent = this.voicePitch.toFixed(1) + 'x';
+                });
+            }
+
+            async speak(text) {
+                if (!this.voiceEnabled) return;
+
+                return new Promise((resolve) => {
+                    // Cancel any ongoing speech
+                    this.synthesis.cancel();
+
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.voice = this.currentVoice;
+                    utterance.rate = this.voiceRate;
+                    utterance.pitch = this.voicePitch;
+
+                    utterance.onstart = () => {
+                        document.getElementById('speaking-indicator').classList.add('active');
+                    };
+
+                    utterance.onend = () => {
+                        document.getElementById('speaking-indicator').classList.remove('active');
+                        resolve();
+                    };
+
+                    utterance.onerror = () => {
+                        document.getElementById('speaking-indicator').classList.remove('active');
+                        resolve();
+                    };
+
+                    this.synthesis.speak(utterance);
+                });
+            }
+
+            initEventListeners() {
+                document.querySelectorAll('.protocol-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.protocol-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentProtocol = e.target.dataset.protocol;
+                        this.showProtocolInfo(this.currentProtocol);
+                        this.clearLog();
+                    });
+                });
+
+                document.querySelectorAll('.scenario-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.currentScenario = e.target.dataset.scenario;
+                        this.runScenario(this.currentProtocol, this.currentScenario);
+                    });
+                });
+
+                document.getElementById('start-simulation').addEventListener('click', () => {
+                    if (this.currentScenario) {
+                        this.runScenario(this.currentProtocol, this.currentScenario);
+                    } else {
+                        this.logEvent('⚠️ Please select a scenario first');
+                    }
+                });
+
+                document.getElementById('clear-log').addEventListener('click', () => {
+                    this.clearLog();
+                });
+            }
+
+            showProtocolInfo(protocol) {
+                const infoDiv = document.getElementById('protocol-info');
+                const protocolData = {
+                    'sip': {
+                        name: 'SIP - Session Initiation Protocol',
+                        description: 'An application-layer signaling protocol for creating, modifying, and terminating sessions with one or more participants.',
+                        features: [
+                            'Text-based protocol similar to HTTP',
+                            'Uses request/response transaction model',
+                            'Supports proxy, redirect, and registrar servers',
+                            'Works with various media types (audio, video)',
+                            'Port: UDP/TCP 5060, TLS 5061'
+                        ]
+                    },
+                    'tapi': {
+                        name: 'TAPI - Telephony API',
+                        description: 'Microsoft\'s API for managing telephone calls and PBX features on Windows platforms.',
+                        features: [
+                            'Event-driven Windows API',
+                            'Supports both first-party and third-party call control',
+                            'Line and phone device abstraction',
+                            'Handles call states and transitions',
+                            'Integrated with Windows telephony service'
+                        ]
+                    },
+                    'csta': {
+                        name: 'CSTA - Computer Supported Telecommunications Applications',
+                        description: 'International standard for integrating computers with telephone systems for call control.',
+                        features: [
+                            'Vendor-neutral standard (ECMA-323)',
+                            'XML-based message format',
+                            'Third-party call control',
+                            'Device monitoring and control',
+                            'Supports advanced features like transfer, conference'
+                        ]
+                    }
+                };
+
+                const data = protocolData[protocol];
+                infoDiv.innerHTML = `
+                    <div class="protocol-info">
+                        <h2>${data.name}</h2>
+                        <p style="margin-bottom: 15px; color: #555;">${data.description}</p>
+                        <h4 style="color: #2a5298; margin-bottom: 10px;">Key Features:</h4>
+                        <ul>
+                            ${data.features.map(f => `<li>${f}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            async runScenario(protocol, scenario) {
+                this.clearLog();
+                this.logEvent(`🚀 Starting ${protocol.toUpperCase()} ${scenario} scenario...`);
+                
+                const scenarioMap = {
+                    'sip': {
+                        'basic-call': this.sipBasicCall.bind(this),
+                        'inbound': this.sipInboundCall.bind(this),
+                        'outbound': this.sipOutboundCall.bind(this),
+                        'transfer': this.sipTransfer.bind(this),
+                        'hold': this.sipHold.bind(this),
+                        'conference': this.sipConference.bind(this),
+                        'hangup': this.sipHangup.bind(this)
+                    },
+                    'tapi': {
+                        'basic-call': this.tapiBasicCall.bind(this),
+                        'inbound': this.tapiInboundCall.bind(this),
+                        'outbound': this.tapiOutboundCall.bind(this),
+                        'transfer': this.tapiTransfer.bind(this),
+                        'hold': this.tapiHold.bind(this),
+                        'conference': this.tapiConference.bind(this),
+                        'hangup': this.tapiHangup.bind(this)
+                    },
+                    'csta': {
+                        'basic-call': this.cstaBasicCall.bind(this),
+                        'inbound': this.cstaInboundCall.bind(this),
+                        'outbound': this.cstaOutboundCall.bind(this),
+                        'transfer': this.cstaTransfer.bind(this),
+                        'hold': this.cstaHold.bind(this),
+                        'conference': this.cstaConference.bind(this),
+                        'hangup': this.cstaHangup.bind(this)
+                    }
+                };
+
+                if (scenarioMap[protocol] && scenarioMap[protocol][scenario]) {
+                    await scenarioMap[protocol][scenario]();
+                }
+            }
+
+            async sipBasicCall() {
+                this.drawCallFlow(['User Agent A', 'SIP Proxy', 'User Agent B']);
+                
+                await this.speak('Starting S I P Basic Call scenario. This demonstrates a simple call setup between two user agents through a SIP proxy server.');
+                await this.sleep(500);
+                
+                await this.speak('User Agent A sends an INVITE request to the SIP Proxy, requesting to establish a call with User Agent B.');
+                await this.animateMessage(0, 1, 'INVITE', `INVITE sip:bob@biloxi.com SIP/2.0
+Via: SIP/2.0/UDP pc33.atlanta.com
+From: Alice <sip:alice@atlanta.com>
+To: Bob <sip:bob@biloxi.com>
+Call-ID: a84b4c76e66710
+CSeq: 314159 INVITE`);
+
+                await this.sleep(800);
+                await this.speak('The SIP Proxy forwards the INVITE request to User Agent B.');
+                await this.animateMessage(1, 2, 'INVITE', 'Forwarded by proxy');
+
+                await this.sleep(800);
+                await this.speak('User Agent B responds with 100 Trying, indicating the request is being processed.');
+                await this.animateMessage(2, 1, '100 Trying', 'Processing request');
+
+                await this.sleep(800);
+                await this.speak('User Agent B sends 180 Ringing to indicate the phone is ringing.');
+                await this.animateMessage(2, 1, '180 Ringing', 'Phone ringing');
+
+                await this.sleep(800);
+                await this.speak('The proxy forwards the ringing notification to User Agent A.');
+                await this.animateMessage(1, 0, '180 Ringing', 'Ringing notification');
+
+                await this.sleep(1200);
+                await this.speak('User Agent B answers the call and sends a 200 OK response.');
+                await this.animateMessage(2, 1, '200 OK', 'Call answered');
+
+                await this.sleep(800);
+                await this.speak('The proxy forwards the 200 OK to User Agent A.');
+                await this.animateMessage(1, 0, '200 OK', 'Answer forwarded');
+
+                await this.sleep(800);
+                await this.speak('User Agent A acknowledges with an ACK message, completing the handshake.');
+                await this.animateMessage(0, 2, 'ACK', 'Acknowledgment');
+
+                await this.speak('Call is now established. Real-time media flows directly between the two user agents using RTP protocol.');
+                this.logEvent('✅ Call established - RTP media flowing');
+            }
+
+            async sipInboundCall() {
+                this.drawCallFlow(['PSTN Gateway', 'SIP Server', 'Agent Desktop']);
+                
+                await this.speak('Starting S I P Inbound Call scenario. This shows how calls from the public telephone network reach an agent.');
+                await this.sleep(500);
+                
+                await this.speak('A call arrives from the PSTN Gateway. The gateway sends an INVITE for an inbound call from phone number +1-555-1234.');
+                await this.animateMessage(0, 1, 'INVITE', 'Inbound call from +1-555-1234');
+                
+                await this.sleep(600);
+                await this.speak('The SIP server routes the call to an available agent desktop based on configured routing rules.');
+                await this.animateMessage(1, 2, 'INVITE', 'Route to available agent');
+                
+                await this.sleep(600);
+                await this.speak('The agent\'s phone rings, sending back a 180 Ringing response.');
+                await this.animateMessage(2, 1, '180 Ringing', 'Agent phone ringing');
+                
+                await this.sleep(1000);
+                await this.speak('The agent picks up the phone and answers, sending a 200 OK.');
+                await this.animateMessage(2, 1, '200 OK', 'Agent answered');
+                
+                await this.sleep(600);
+                await this.speak('The SIP server forwards the answer back to the PSTN gateway.');
+                await this.animateMessage(1, 0, '200 OK', 'Call connected');
+                
+                await this.sleep(600);
+                await this.speak('The gateway acknowledges with an ACK message.');
+                await this.animateMessage(0, 1, 'ACK', 'Acknowledgment');
+                
+                await this.speak('Inbound call successfully connected. The caller is now speaking with the agent.');
+                this.logEvent('✅ Inbound call connected to agent');
+            }
+
+            async sipOutboundCall() {
+                this.drawCallFlow(['Agent Desktop', 'SIP Server', 'PSTN Gateway']);
+                
+                await this.speak('Starting S I P Outbound Call scenario. This shows how an agent initiates a call to an external number.');
+                await this.sleep(500);
+                
+                await this.speak('The agent desktop sends an INVITE to the SIP server to place an outbound call to +1-555-9876.');
+                await this.animateMessage(0, 1, 'INVITE', 'Outbound call to +1-555-9876');
+                
+                await this.sleep(600);
+                await this.speak('The SIP server routes the call through the PSTN gateway to reach the external phone network.');
+                await this.animateMessage(1, 2, 'INVITE', 'Route to PSTN');
+                
+                await this.sleep(600);
+                await this.speak('The gateway responds with 100 Trying, indicating it\'s processing the request.');
+                await this.animateMessage(2, 1, '100 Trying', 'Processing');
+                
+                await this.sleep(800);
+                await this.speak('The gateway sends 183 Session Progress, which may include early media like ringback tone.');
+                await this.animateMessage(2, 1, '183 Progress', 'Early media');
+                
+                await this.sleep(1200);
+                await this.speak('The remote party answers, and the gateway sends 200 OK.');
+                await this.animateMessage(2, 1, '200 OK', 'Call answered');
+                
+                await this.sleep(600);
+                await this.speak('The agent desktop acknowledges with ACK.');
+                await this.animateMessage(0, 1, 'ACK', 'Acknowledgment');
+                
+                await this.speak('Outbound call connected. The agent can now speak with the external party.');
+                this.logEvent('✅ Outbound call connected');
+            }
+
+            async sipTransfer() {
+                this.drawCallFlow(['Agent A', 'SIP Server', 'Agent B']);
+                
+                await this.speak('Starting S I P Call Transfer scenario. This demonstrates how to transfer an active call from one agent to another.');
+                await this.sleep(500);
+                
+                this.logEvent('📞 Initial call between Agent A and Customer');
+                await this.speak('We begin with an active call between Agent A and a customer. Agent A wants to transfer this call to Agent B.');
+                await this.sleep(800);
+                
+                await this.speak('Agent A sends a REFER message to the SIP server, indicating the call should be transferred to Agent B.');
+                await this.animateMessage(0, 1, 'REFER', `REFER sip:customer@server.com SIP/2.0
+Refer-To: <sip:agentB@server.com>
+Referred-By: <sip:agentA@server.com>`);
+                
+                await this.sleep(600);
+                await this.speak('The server responds with 202 Accepted, confirming it will process the transfer.');
+                await this.animateMessage(1, 0, '202 Accepted', 'Transfer accepted');
+                
+                await this.sleep(600);
+                await this.speak('The server initiates a new call to Agent B on behalf of the customer.');
+                await this.animateMessage(1, 2, 'INVITE', 'New call to Agent B');
+                
+                await this.sleep(800);
+                await this.speak('Agent B answers the call with a 200 OK response.');
+                await this.animateMessage(2, 1, '200 OK', 'Agent B answers');
+                
+                await this.sleep(600);
+                await this.speak('The server sends a NOTIFY message to confirm the transfer was successful.');
+                await this.animateMessage(1, 0, 'NOTIFY', 'Transfer successful');
+                
+                await this.speak('Transfer complete. The customer is now connected to Agent B, and Agent A has been released from the call.');
+                this.logEvent('✅ Call transferred to Agent B');
+            }
+
+            async sipHold() {
+                this.drawCallFlow(['User A', 'SIP Server', 'User B']);
+                
+                await this.speak('Starting S I P Hold and Resume scenario. This shows how to place a call on hold and then resume it.');
+                await this.sleep(500);
+                
+                this.logEvent('📞 Active call established');
+                await this.speak('We begin with an active call between User A and User B.');
+                await this.sleep(800);
+                
+                await this.speak('User A wants to place the call on hold. They send a re-INVITE with the session description set to send only, meaning no audio will be received from User A.');
+                await this.animateMessage(0, 1, 'Re-INVITE (hold)', 'a=sendonly');
+                
+                await this.sleep(600);
+                await this.speak('The server responds with 200 OK, confirming the call is now on hold.');
+                await this.animateMessage(1, 0, '200 OK', 'Call on hold');
+                this.logEvent('⏸️ Call placed on hold');
+                
+                await this.sleep(1500);
+                await this.speak('After some time, User A wants to resume the call. They send another re-INVITE, this time with send and receive enabled.');
+                await this.animateMessage(0, 1, 'Re-INVITE (resume)', 'a=sendrecv');
+                
+                await this.sleep(600);
+                await this.speak('The server confirms with 200 OK, and the call is now active again with bi-directional audio.');
+                await this.animateMessage(1, 0, '200 OK', 'Call resumed');
+                
+                await this.speak('Call has been successfully resumed. Both parties can now hear each other again.');
+                this.logEvent('▶️ Call resumed');
+            }
+
+            async sipConference() {
+                this.drawCallFlow(['User A', 'Conference', 'User B']);
+                
+                await this.speak('Starting S I P Conference Call scenario. This demonstrates setting up a multi-party conference call.');
+                await this.sleep(500);
+                
+                await this.speak('User A sends an INVITE to join a conference bridge or server.');
+                await this.animateMessage(0, 1, 'INVITE', 'Join conference');
+                
+                await this.sleep(600);
+                await this.speak('The conference server responds with 200 OK, and User A is now connected to the conference.');
+                await this.animateMessage(1, 0, '200 OK', 'User A joined');
+                
+                await this.sleep(800);
+                await this.speak('Next, User B sends an INVITE to join the same conference.');
+                await this.animateMessage(2, 1, 'INVITE', 'User B joins');
+                
+                await this.sleep(600);
+                await this.speak('The conference server accepts User B with a 200 OK response.');
+                await this.animateMessage(1, 2, '200 OK', 'User B joined');
+                
+                await this.speak('Conference is now active with two participants. Additional users can join the same way, and all participants can hear each other.');
+                this.logEvent('✅ Conference with 2 participants active');
+            }
+
+            async sipHangup() {
+                this.drawCallFlow(['User A', 'SIP Server', 'User B']);
+                
+                await this.speak('Starting S I P Call Termination scenario. This demonstrates how to properly end a call.');
+                await this.sleep(500);
+                
+                this.logEvent('📞 Active call in progress');
+                await this.speak('We have an active call between User A and User B.');
+                await this.sleep(1000);
+                
+                await this.speak('User A hangs up and sends a BYE message to terminate the call.');
+                await this.animateMessage(0, 1, 'BYE', 'Call-ID: a84b4c76e66710');
+                
+                await this.sleep(600);
+                await this.speak('The SIP server forwards the BYE message to User B.');
+                await this.animateMessage(1, 2, 'BYE', 'Terminate call');
+                
+                await this.sleep(600);
+                await this.speak('User B acknowledges the termination with a 200 OK response.');
+                await this.animateMessage(2, 1, '200 OK', 'Call terminated');
+                
+                await this.sleep(600);
+                await this.speak('The server forwards the confirmation back to User A.');
+                await this.animateMessage(1, 0, '200 OK', 'Confirmation');
+                
+                await this.speak('Call terminated successfully. All resources are released, and the session is ended.');
+                this.logEvent('✅ Call terminated successfully');
+            }
+
+            async tapiBasicCall() {
+                this.drawCallFlow(['Application', 'TAPI Service', 'Phone Device']);
+                
+                await this.speak('Starting TAPI Basic Call scenario. TAPI is Microsoft\'s Telephony API for Windows applications. This shows how an application makes an outbound call.');
+                await this.sleep(500);
+                
+                await this.speak('First, the application calls line Open to establish a connection to a telephony line.');
+                await this.animateMessage(0, 1, 'lineOpen', `lineOpen(hLineApp, dwDeviceID: 0)`);
+
+                await this.sleep(600);
+                await this.speak('The TAPI service returns success, and the line is now opened for use.');
+                await this.animateMessage(1, 0, 'Success', 'Line opened');
+
+                await this.sleep(800);
+                await this.speak('The application calls line Make Call to initiate an outbound call to number 555-1234.');
+                await this.animateMessage(0, 1, 'lineMakeCall', `lineMakeCall(hLine, "555-1234")`);
+
+                await this.sleep(600);
+                await this.speak('TAPI service instructs the phone device to dial the number.');
+                await this.animateMessage(1, 2, 'Dial', 'Dialing 555-1234');
+
+                await this.sleep(1000);
+                await this.speak('The application receives a LINE CALLSTATE event with state DIALTONE.');
+                await this.animateMessage(1, 0, 'LINE_CALLSTATE', 'State: DIALTONE');
+
+                await this.sleep(800);
+                await this.speak('Next, the call state changes to DIALING as the number is being dialed.');
+                await this.animateMessage(1, 0, 'LINE_CALLSTATE', 'State: DIALING');
+
+                await this.sleep(1200);
+                await this.speak('Finally, the call state becomes CONNECTED, indicating the remote party has answered.');
+                await this.animateMessage(1, 0, 'LINE_CALLSTATE', 'State: CONNECTED');
+
+                await this.speak('Call is now connected. The application can monitor call events and control the call through TAPI functions.');
+                this.logEvent('✅ Call connected');
+            }
+
+            async tapiInboundCall() {
+                this.drawCallFlow(['TAPI Service', 'Application', 'Phone Line']);
+                
+                await this.sleep(500);
+                await this.animateMessage(0, 1, 'LINE_CALLSTATE', `State: OFFERING
+CallerID: 555-9876`);
+
+                this.logEvent('📞 Incoming call from 555-9876');
+
+                await this.sleep(1000);
+                await this.animateMessage(1, 0, 'lineAnswer', `lineAnswer(hCall)`);
+
+                await this.sleep(600);
+                await this.animateMessage(0, 1, 'LINE_CALLSTATE', 'State: CONNECTED');
+
+                this.logEvent('✅ Inbound call answered');
+            }
+
+            async tapiOutboundCall() {
+                this.drawCallFlow(['Application', 'TAPI Service', 'Phone Line']);
+                
+                await this.sleep(500);
+                await this.animateMessage(0, 1, 'lineMakeCall', 'Dial +1-555-7890');
+
+                await this.sleep(600);
+                await this.animateMessage(1, 2, 'Place Call', 'Dialing...');
+
+                await this.sleep(800);
+                await this.animateMessage(1, 0, 'LINE_CALLSTATE', 'State: PROCEEDING');
+
+                await this.sleep(1000);
+                await this.animateMessage(1, 0, 'LINE_CALLSTATE', 'State: RINGBACK');
+
+                await this.sleep(1500);
+                await this.animateMessage(1, 0, 'LINE_CALLSTATE', 'State: CONNECTED');
+
+                this.logEvent('✅ Outbound call connected');
+            }
+
+            async tapiTransfer() {
+                this.drawCallFlow(['Application', 'TAPI Service', 'Transfer Target']);
+                
+                await this.sleep(500);
+                this.logEvent('📞 Active call with customer');
+
+                await this.sleep(1000);
+                await this.animateMessage(0, 1, 'lineBlindTransfer', 'Transfer to ext-456');
+
+                await this.sleep(600);
+                await this.animateMessage(1, 2, 'Transfer', 'Transferring...');
+
+                await this.sleep(800);
+                await this.animateMessage(1, 0, 'LINE_CALLSTATE', 'State: DISCONNECTED');
+
+                this.logEvent('✅ Call transferred successfully');
+            }
+
+            async tapiHold() {
+                this.drawCallFlow(['Application', 'TAPI Service', 'Active Call']);
+                
+                await this.sleep(500);
+                this.logEvent('📞 Active call');
+
+                await this.sleep(1000);
+                await this.animateMessage(0, 1, 'lineHold', `lineHold(hCall)`);
+
+                await this.sleep(600);
+                await this.animateMessage(1, 0, 'LINE_CALLSTATE', 'State: ONHOLD');
+
+                this.logEvent('⏸️ Call on hold');
+
+                await this.sleep(1500);
+                await this.animateMessage(0, 1, 'lineUnhold', `lineUnhold(hCall)`);
+
+                await this.sleep(600);
+                await this.animateMessage(1, 0, 'LINE_CALLSTATE', 'State: CONNECTED');
+
+                this.logEvent('▶️ Call resumed');
+            }
+
+            async tapiConference() {
+                this.drawCallFlow(['Application', 'TAPI Service', 'Conference']);
+                
+                await this.sleep(500);
+                this.logEvent('Setting up conference call');
+
+                await this.sleep(800);
+                await this.animateMessage(0, 1, 'lineSetupConference', 'Setup 3-way conference');
+
+                await this.sleep(600);
+                await this.animateMessage(1, 0, 'Success', 'Conference setup');
+
+                await this.sleep(800);
+                await this.animateMessage(0, 1, 'lineAddToConference', 'Adding participant');
+
+                await this.sleep(600);
+                await this.animateMessage(1, 0, 'LINE_CALLSTATE', 'Participant added');
+
+                this.logEvent('✅ Conference call active');
+            }
+
+            async tapiHangup() {
+                this.drawCallFlow(['Application', 'TAPI Service', 'Active Call']);
+                
+                await this.sleep(500);
+                this.logEvent('📞 Active call');
+
+                await this.sleep(1000);
+                await this.animateMessage(0, 1, 'lineDrop', `lineDrop(hCall)`);
+
+                await this.sleep(600);
+                await this.animateMessage(1, 0, 'LINE_CALLSTATE', 'State: DISCONNECTED');
+
+                await this.sleep(600);
+                await this.animateMessage(0, 1, 'lineDeallocateCall', 'Deallocate call');
+
+                this.logEvent('✅ Call terminated');
+            }
+
+            async cstaBasicCall() {
+                this.drawCallFlow(['CTI Client', 'CSTA Server', 'PBX']);
+                
+                await this.speak('Starting CSTA Basic Call scenario. CSTA is a vendor-neutral international standard for computer telephony integration. This demonstrates third-party call control.');
+                await this.sleep(500);
+                
+                await this.speak('The CTI client sends a Make Call request in XML format to the CSTA server, requesting to initiate a call from device 1001 to number 5551234.');
+                await this.animateMessage(0, 1, 'MakeCall', `<MakeCall>
+  <callingDevice>1001</callingDevice>
+  <calledNumber>5551234</calledNumber>
+</MakeCall>`);
+
+                await this.sleep(600);
+                await this.speak('The CSTA server forwards the request to the PBX to initiate the call.');
+                await this.animateMessage(1, 2, 'Initiate Call', 'PBX processing');
+
+                await this.sleep(800);
+                await this.speak('The CSTA server responds with Make Call Response, providing a unique call ID for tracking this call.');
+                await this.animateMessage(1, 0, 'MakeCallResponse', 'callID: CALL-12345');
+
+                await this.sleep(1000);
+                await this.speak('A Delivered Event is sent, indicating the call is alerting at the destination number 5551234.');
+                await this.animateMessage(1, 0, 'DeliveredEvent', 'Alerting 5551234');
+
+                await this.sleep(1200);
+                await this.speak('Finally, an Established Event confirms that the call has been answered and is now active.');
+                await this.animateMessage(1, 0, 'EstablishedEvent', 'Call answered');
+
+                await this.speak('Call established. The CTI client now receives events for all call state changes and can issue additional commands like transfer or hold.');
+                this.logEvent('✅ Call established');
+            }
+
+            async cstaInboundCall() {
+                this.drawCallFlow(['PBX', 'CSTA Server', 'CTI Client']);
+                
+                await this.sleep(500);
+                await this.animateMessage(1, 2, 'DeliveredEvent', `Incoming: 5559876 -> 1001`);
+
+                this.logEvent('📞 Incoming call from 5559876');
+
+                await this.sleep(1000);
+                await this.animateMessage(2, 1, 'AnswerCall', 'Answer CALL-67890');
+
+                await this.sleep(600);
+                await this.animateMessage(1, 2, 'EstablishedEvent', 'Call answered');
+
+                this.logEvent('✅ Inbound call answered');
+            }
+
+            async cstaOutboundCall() {
+                this.drawCallFlow(['CTI Client', 'CSTA Server', 'PBX']);
+                
+                await this.sleep(500);
+                await this.animateMessage(0, 1, 'MakeCall', 'Dial 5557890');
+
+                await this.sleep(600);
+                await this.animateMessage(1, 2, 'Route Call', 'PBX routing');
+
+                await this.sleep(800);
+                await this.animateMessage(1, 0, 'OriginatedEvent', 'Call originated');
+
+                await this.sleep(1000);
+                await this.animateMessage(1, 0, 'DeliveredEvent', 'Call delivered');
+
+                await this.sleep(1200);
+                await this.animateMessage(1, 0, 'EstablishedEvent', 'Call connected');
+
+                this.logEvent('✅ Outbound call established');
+            }
+
+            async cstaTransfer() {
+                this.drawCallFlow(['CTI Client', 'CSTA Server', 'PBX']);
+                
+                await this.sleep(500);
+                this.logEvent('📞 Active call');
+
+                await this.sleep(1000);
+                await this.animateMessage(0, 1, 'SingleStepTransfer', 'Transfer to 1002');
+
+                await this.sleep(600);
+                await this.animateMessage(1, 2, 'Execute Transfer', 'Transferring...');
+
+                await this.sleep(800);
+                await this.animateMessage(1, 0, 'TransferredEvent', 'Call transferred');
+
+                this.logEvent('✅ Call transferred to 1002');
+            }
+
+            async cstaHold() {
+                this.drawCallFlow(['CTI Client', 'CSTA Server', 'PBX']);
+                
+                await this.sleep(500);
+                this.logEvent('📞 Active call');
+
+                await this.sleep(1000);
+                await this.animateMessage(0, 1, 'HoldCall', 'Hold CALL-12345');
+
+                await this.sleep(600);
+                await this.animateMessage(1, 0, 'HeldEvent', 'Call held');
+
+                this.logEvent('⏸️ Call on hold');
+
+                await this.sleep(1500);
+                await this.animateMessage(0, 1, 'RetrieveCall', 'Retrieve call');
+
+                await this.sleep(600);
+                await this.animateMessage(1, 0, 'RetrievedEvent', 'Call retrieved');
+
+                this.logEvent('▶️ Call resumed');
+            }
+
+            async cstaConference() {
+                this.drawCallFlow(['CTI Client', 'CSTA Server', 'PBX']);
+                
+                await this.sleep(500);
+                await this.animateMessage(0, 1, 'ConferenceCall', 'Merge calls');
+
+                await this.sleep(800);
+                await this.animateMessage(1, 0, 'ConferencedEvent', '3 participants');
+
+                this.logEvent('✅ Conference call established');
+            }
+
+            async cstaHangup() {
+                this.drawCallFlow(['CTI Client', 'CSTA Server', 'PBX']);
+                
+                await this.sleep(500);
+                this.logEvent('📞 Active call');
+
+                await this.sleep(1000);
+                await this.animateMessage(0, 1, 'ClearConnection', 'Drop call');
+
+                await this.sleep(600);
+                await this.animateMessage(1, 2, 'Drop Call', 'Terminating');
+
+                await this.sleep(600);
+                await this.animateMessage(1, 0, 'ConnectionCleared', 'Call terminated');
+
+                this.logEvent('✅ Call terminated');
+            }
+
+            drawCallFlow(participants) {
+                const diagram = document.getElementById('call-flow-diagram');
+                diagram.innerHTML = '';
+                
+                const positions = [
+                    { left: '50px', class: 'caller' },
+                    { left: '50%', transform: 'translateX(-50%)', class: 'server' },
+                    { right: '50px', class: 'callee' }
+                ];
+
+                participants.forEach((name, idx) => {
+                    const participant = document.createElement('div');
+                    participant.className = `participant ${positions[idx].class}`;
+                    participant.style.left = positions[idx].left || '';
+                    participant.style.right = positions[idx].right || '';
+                    if (positions[idx].transform) {
+                        participant.style.left = positions[idx].left;
+                        participant.style.transform = positions[idx].transform;
+                    }
+                    participant.textContent = name;
+                    participant.dataset.index = idx;
+                    diagram.appendChild(participant);
+
+                    const lifeline = document.createElement('div');
+                    lifeline.className = 'lifeline';
+                    const rect = participant.getBoundingClientRect();
+                    const diagramRect = diagram.getBoundingClientRect();
+                    lifeline.style.left = (rect.left - diagramRect.left + rect.width / 2) + 'px';
+                    diagram.appendChild(lifeline);
+                });
+            }
+
+            async animateMessage(fromIdx, toIdx, label, details) {
+                const diagram = document.getElementById('call-flow-diagram');
+                const participants = diagram.querySelectorAll('.participant');
+                
+                if (!participants[fromIdx] || !participants[toIdx]) return;
+
+                const fromRect = participants[fromIdx].getBoundingClientRect();
+                const toRect = participants[toIdx].getBoundingClientRect();
+                const diagramRect = diagram.getBoundingClientRect();
+
+                const messageY = 100 + (diagram.querySelectorAll('.message-arrow').length * 60);
+                
+                const arrow = document.createElement('div');
+                arrow.className = 'message-arrow';
+                arrow.style.top = messageY + 'px';
+                
+                const fromX = fromRect.left - diagramRect.left + fromRect.width / 2;
+                const toX = toRect.left - diagramRect.left + toRect.width / 2;
+                
+                arrow.style.left = Math.min(fromX, toX) + 'px';
+                arrow.style.width = Math.abs(toX - fromX) + 'px';
+                
+                const messageLabel = document.createElement('div');
+                messageLabel.className = 'message-label';
+                messageLabel.textContent = label;
+                messageLabel.style.top = (messageY - 20) + 'px';
+                messageLabel.style.left = (Math.min(fromX, toX) + Math.abs(toX - fromX) / 2) + 'px';
+                messageLabel.style.transform = 'translateX(-50%)';
+                
+                if (details) {
+                    messageLabel.addEventListener('click', () => {
+                        document.getElementById('protocol-detail').style.display = 'block';
+                        document.getElementById('protocol-code').textContent = details;
+                    });
+                }
+                
+                diagram.appendChild(arrow);
+                diagram.appendChild(messageLabel);
+                
+                this.logEvent(`${label}: ${participants[fromIdx].textContent} → ${participants[toIdx].textContent}`);
+                
+                await this.sleep(500);
+            }
+
+            logEvent(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                const entry = document.createElement('div');
+                entry.className = 'event-entry';
+                entry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+                
+                const log = document.getElementById('event-log');
+                log.appendChild(entry);
+                log.scrollTop = log.scrollHeight;
+            }
+
+            clearLog() {
+                document.getElementById('event-log').innerHTML = '';
+                document.getElementById('call-flow-diagram').innerHTML = '';
+                document.getElementById('protocol-detail').style.display = 'none';
+            }
+
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        const simulator = new CTISimulator();
+    </script>
+</body>
+</html>
